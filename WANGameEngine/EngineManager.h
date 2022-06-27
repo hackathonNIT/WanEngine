@@ -17,7 +17,10 @@ private:
 	ID3D12Device* device = nullptr;
 	IDXGIFactory6* dxgiFactory = nullptr;
 	IDXGISwapChain4* swapchain = nullptr;
-
+	
+	ID3D12CommandAllocator* cmdAllocator = nullptr;
+	ID3D12GraphicsCommandList* cmdList = nullptr;
+	ID3D12CommandQueue* cmdQueue = nullptr;
 	//ウィンドウサイズ
 	const unsigned int window_width = 1280;
 	const unsigned int window_height = 720;
