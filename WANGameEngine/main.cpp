@@ -31,5 +31,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		cout << "‹­§I—¹‚µ‚Ü‚µ‚½" << endl;
 		return -1;
 	}
+	cout << "³íI—¹" << endl;
 	return 0;
 }

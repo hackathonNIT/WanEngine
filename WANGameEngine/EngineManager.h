@@ -2,6 +2,9 @@
 #include "Singleton.h"
 
 #include<Windows.h>
+#include<d3d12.h>
+#include<dxgi1_6.h>
+#include "Dx12Wrapper.h"
 
 
 class EngineManager : public Singleton<EngineManager>
@@ -11,6 +14,10 @@ private:
 	HWND _hwnd;
 	WNDCLASSEX _wndClass = {};
 
+	ID3D12Device* device = nullptr;
+	IDXGIFactory6* dxgiFactory = nullptr;
+	IDXGISwapChain4* swapchain = nullptr;
+
 	//ウィンドウサイズ
 	const unsigned int window_width = 1280;
 	const unsigned int window_height = 720;
@@ -18,9 +25,11 @@ private:
 	~EngineManager();
 public:
 	
-	bool initializeManager();
+	bool initializeManager(); 
 	bool MainLoopProcess();
 	
-	bool initializeWindowManager();
+	bool initializeWindowManager();//windowの初期化
+	bool initializeDeviseManager();//deviceの初期化
+	bool initializeGraphicsManager();//graphicの初期化
 	void EnableDebugLayer();
 };
