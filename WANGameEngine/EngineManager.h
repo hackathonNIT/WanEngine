@@ -11,8 +11,8 @@ class EngineManager : public Singleton<EngineManager>
 {
 private:
 	friend Singleton<EngineManager>;
-	HWND _hwnd;
-	WNDCLASSEX _wndClass = {};
+	HWND hwnd;
+	WNDCLASSEX wndClass = {};
 
 	ID3D12Device* device = nullptr;
 	IDXGIFactory6* dxgiFactory = nullptr;
