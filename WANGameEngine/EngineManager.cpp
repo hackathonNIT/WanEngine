@@ -11,6 +11,8 @@
 
 #include<d3dx12.h>
 
+#include<iostream>
+
 #pragma comment(lib,"DirectXTex.lib")
 #pragma comment(lib,"d3d12.lib")
 #pragma comment(lib,"dxgi.lib")
@@ -44,7 +46,7 @@ bool EngineManager::initializeManager()
 
 bool EngineManager::MainLoopProcess()
 {
-    ShowWindow(_hwnd, SW_SHOW);
+    ShowWindow(hwnd, SW_SHOW);
     MSG msg = {};
     //MainLoop
     while (1) {
@@ -58,21 +60,21 @@ bool EngineManager::MainLoopProcess()
 
     }
 
-    UnregisterClass(_wndClass.lpszClassName, _wndClass.hInstance);
+    UnregisterClass(wndClass.lpszClassName, wndClass.hInstance);
     return true;
 }
 
 bool EngineManager::initializeWindowManager()
 {
-    _wndClass.cbSize = sizeof(WNDCLASSEX);
-    _wndClass.lpfnWndProc = (WNDPROC)WindowProcedure;
-    _wndClass.lpszClassName = _T("DirectXTest");
-    _wndClass.hInstance = GetModuleHandle(0);
-    RegisterClassEx(&_wndClass);
+    wndClass.cbSize = sizeof(WNDCLASSEX);
+    wndClass.lpfnWndProc = (WNDPROC)WindowProcedure;
+    wndClass.lpszClassName = _T("DirectXTest");
+    wndClass.hInstance = GetModuleHandle(0);
+    RegisterClassEx(&wndClass);
     RECT wrc = { 0,0, window_width, window_height };
     AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
     //ウィンドウオブジェクトの生成
-    _hwnd = CreateWindow(_wndClass.lpszClassName,
+    hwnd = CreateWindow(wndClass.lpszClassName,
         _T("わんえんじん"),
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT,
@@ -81,9 +83,9 @@ bool EngineManager::initializeWindowManager()
         wrc.bottom - wrc.top,
         nullptr,
         nullptr,
-        _wndClass.hInstance,
+        wndClass.hInstance,
         nullptr);
-    if (_hwnd == 0)return false;
+    if (hwnd == 0)return false;
 #ifdef _DEBUG
     //デバッグレイヤーをオンに
     EnableDebugLayer();
@@ -143,6 +145,46 @@ bool EngineManager::initializeGraphicsManager()
     cmdQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
     cmdQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
     device->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&cmdQueue));
+
+    //スワップチェーン
+    DXGI_SWAP_CHAIN_DESC1 swapchainDesc = {};
+    swapchainDesc.Width = window_width;
+    swapchainDesc.Height = window_height;
+    swapchainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapchainDesc.Stereo = false;
+    swapchainDesc.SampleDesc.Count = 1;
+    swapchainDesc.SampleDesc.Quality = 0;
+    swapchainDesc.BufferUsage = DXGI_USAGE_BACK_BUFFER;
+    swapchainDesc.BufferCount = 2;
+    swapchainDesc.Scaling = DXGI_SCALING_STRETCH;
+    swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    swapchainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
+    swapchainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+
+    dxgiFactory->CreateSwapChainForHwnd(cmdQueue, hwnd, &swapchainDesc, nullptr, nullptr, (IDXGISwapChain1**)&swapchain);
+
+    D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
+    heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+    heapDesc.NodeMask = 0;
+    heapDesc.NumDescriptors = 2;//表裏の２つ
+    heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    ID3D12DescriptorHeap* rtvHeaps = nullptr;
+    device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&rtvHeaps));
+    DXGI_SWAP_CHAIN_DESC swcDesc = {};
+    swapchain->GetDesc(&swcDesc);
+    std::vector<ID3D12Resource*> _backBuffers(swcDesc.BufferCount);
+    D3D12_CPU_DESCRIPTOR_HANDLE handle = rtvHeaps->GetCPUDescriptorHandleForHeapStart();
+    for (size_t i = 0; i < swcDesc.BufferCount; ++i) {
+        swapchain->GetBuffer(static_cast<UINT>(i), IID_PPV_ARGS(&_backBuffers[i]));
+        device->CreateRenderTargetView(_backBuffers[i], nullptr, handle);
+        handle.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    }
+    ID3D12Fence* fence = nullptr;
+    UINT64 fenceVal = 0;
+    device->CreateFence(fenceVal, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
+
+
+
     return true;
 }
 
