@@ -109,6 +109,12 @@ bool EngineManager::MainLoopProcess()
     return true;
 }
 
+
+
+
+
+/**************************initialize**************************/
+
 bool EngineManager::initializeWindowManager()
 {
     wndClass.cbSize = sizeof(WNDCLASSEX);
