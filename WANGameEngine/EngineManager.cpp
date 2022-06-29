@@ -37,8 +37,8 @@ EngineManager::~EngineManager()
 
 bool EngineManager::initializeManager()
 {
-    bool Result=false;
-    Result=initializeWindowManager();
+    bool Result = false;
+    Result = initializeWindowManager();
     Result &= initializeDeviseManager();
     Result &= initializeGraphicsManager();
     return Result;
@@ -58,6 +58,51 @@ bool EngineManager::MainLoopProcess()
             break;
         }
 
+        //directxの処理
+        auto bbIdx = swapchain->GetCurrentBackBufferIndex();
+        
+        D3D12_RESOURCE_BARRIER BarrierDesc = {};
+        BarrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+        BarrierDesc.Transition.pResource = backBuffers[bbIdx];
+        BarrierDesc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+        BarrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+        BarrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+        cmdList->ResourceBarrier(1, &BarrierDesc);
+
+        auto rtvH = rtvHeaps->GetCPUDescriptorHandleForHeapStart();
+        rtvH.ptr += bbIdx * device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+        cmdList->OMSetRenderTargets(1, &rtvH, true, nullptr);
+
+        //画面クリア
+        float clearColor[] = { 1.0f,1.0f,0.0f,1.0f };
+        cmdList->ClearRenderTargetView(rtvH, clearColor, 0, nullptr);
+
+        BarrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+        BarrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+        cmdList->ResourceBarrier(1, &BarrierDesc);
+
+        cmdList->Close();
+
+        //コマンドリストの実行
+        ID3D12CommandList* cmdlists[] = { cmdList };
+        cmdQueue->ExecuteCommandLists(1, cmdlists);
+        ////待ち
+        cmdQueue->Signal(fence, ++fenceVal);
+
+        if (fence->GetCompletedValue() != fenceVal) {
+            auto event = CreateEvent(nullptr, false, false, nullptr);
+            fence->SetEventOnCompletion(fenceVal, event);
+            WaitForSingleObject(event, INFINITE);
+            CloseHandle(event);
+        }
+        cmdAllocator->Reset();//キューをクリア
+        cmdList->Reset(cmdAllocator, nullptr);//再びコマンドリストをためる準備
+
+        //フリップ
+        swapchain->Present(1, 0);
+
     }
 
     UnregisterClass(wndClass.lpszClassName, wndClass.hInstance);
@@ -75,7 +120,7 @@ bool EngineManager::initializeWindowManager()
     AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
     //ウィンドウオブジェクトの生成
     hwnd = CreateWindow(wndClass.lpszClassName,
-        _T("わんえんじん"),
+        _T("ウィンドウ"),
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
@@ -168,22 +213,19 @@ bool EngineManager::initializeGraphicsManager()
     heapDesc.NodeMask = 0;
     heapDesc.NumDescriptors = 2;//表裏の２つ
     heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    ID3D12DescriptorHeap* rtvHeaps = nullptr;
     device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&rtvHeaps));
     DXGI_SWAP_CHAIN_DESC swcDesc = {};
     swapchain->GetDesc(&swcDesc);
-    std::vector<ID3D12Resource*> _backBuffers(swcDesc.BufferCount);
+    std::cout << swcDesc.BufferCount << std::endl;
+    backBuffers = std::vector<ID3D12Resource*>(swcDesc.BufferCount);
     D3D12_CPU_DESCRIPTOR_HANDLE handle = rtvHeaps->GetCPUDescriptorHandleForHeapStart();
     for (size_t i = 0; i < swcDesc.BufferCount; ++i) {
-        swapchain->GetBuffer(static_cast<UINT>(i), IID_PPV_ARGS(&_backBuffers[i]));
-        device->CreateRenderTargetView(_backBuffers[i], nullptr, handle);
+        swapchain->GetBuffer(static_cast<UINT>(i), IID_PPV_ARGS(&backBuffers[i]));
+        device->CreateRenderTargetView(backBuffers[i], nullptr, handle);
         handle.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     }
-    ID3D12Fence* fence = nullptr;
-    UINT64 fenceVal = 0;
+    
     device->CreateFence(fenceVal, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
-
-
 
     return true;
 }
