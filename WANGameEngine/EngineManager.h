@@ -6,6 +6,9 @@
 #include<dxgi1_6.h>
 #include<vector>
 
+#include "Window/WindowManager.h"
+
+
 
 class EngineManager : public Singleton<EngineManager>
 {
@@ -13,8 +16,7 @@ private:
 	friend Singleton<EngineManager>;
 
 	//ウィンドウ
-	HWND hwnd;
-	WNDCLASSEX wndClass = {};
+	WindowManager* windowMamager;
 
 	//デバイス
 	ID3D12Device* device = nullptr;
@@ -38,6 +40,8 @@ private:
 	//ウィンドウサイズ
 	const unsigned int window_width = 1280;
 	const unsigned int window_height = 720;
+
+	
 	EngineManager();
 	~EngineManager();
 public:
