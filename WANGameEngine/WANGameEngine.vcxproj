@@ -151,6 +151,7 @@
   <ItemGroup>
     <ClCompile Include="Device\DeviceManager.cpp" />
     <ClCompile Include="EngineManager.cpp" />
+    <ClCompile Include="Graphics\GraphicsManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Swapchain\SwapchainManager.cpp" />
     <ClCompile Include="Window\WindowManager.cpp" />
@@ -158,6 +159,7 @@
   <ItemGroup>
     <ClInclude Include="Device\DeviceManager.h" />
     <ClInclude Include="EngineManager.h" />
+    <ClInclude Include="Graphics\GraphicsManager.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Singleton.h" />
     <ClInclude Include="Swapchain\SwapchainManager.h" />

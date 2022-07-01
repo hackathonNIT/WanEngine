@@ -60,6 +60,9 @@ bool EngineManager::MainLoopProcess()
         //directxの処理
         auto bbIdx = swapchainManager->swapchain->GetCurrentBackBufferIndex();
         
+
+        //TODO : GraphicsManager内で処理できるように変更する
+
         D3D12_RESOURCE_BARRIER BarrierDesc = {};
         BarrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
         BarrierDesc.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
@@ -67,28 +70,28 @@ bool EngineManager::MainLoopProcess()
         BarrierDesc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
         BarrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
         BarrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-        cmdList->ResourceBarrier(1, &BarrierDesc);
+        graphicsManager->cmdList->ResourceBarrier(1, &BarrierDesc);
 
         auto rtvH = rtvHeaps->GetCPUDescriptorHandleForHeapStart();
         rtvH.ptr += bbIdx * deviceManager->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-        cmdList->OMSetRenderTargets(1, &rtvH, true, nullptr);
+        graphicsManager->cmdList->OMSetRenderTargets(1, &rtvH, true, nullptr);
 
         //画面クリア
         float clearColor[] = { 1.0f,1.0f,0.0f,1.0f };
-        cmdList->ClearRenderTargetView(rtvH, clearColor, 0, nullptr);
+        graphicsManager->cmdList->ClearRenderTargetView(rtvH, clearColor, 0, nullptr);
 
         BarrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
         BarrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-        cmdList->ResourceBarrier(1, &BarrierDesc);
+        graphicsManager->cmdList->ResourceBarrier(1, &BarrierDesc);
 
-        cmdList->Close();
+        graphicsManager->cmdList->Close();
 
         //コマンドリストの実行
-        ID3D12CommandList* cmdlists[] = { cmdList };
-        cmdQueue->ExecuteCommandLists(1, cmdlists);
+        ID3D12CommandList* cmdlists[] = { graphicsManager->cmdList };
+        graphicsManager->cmdQueue->ExecuteCommandLists(1, cmdlists);
         ////待ち
-        cmdQueue->Signal(fence, ++fenceVal);
+        graphicsManager->cmdQueue->Signal(fence, ++fenceVal);
 
         if (fence->GetCompletedValue() != fenceVal) {
             auto event = CreateEvent(nullptr, false, false, nullptr);
@@ -96,8 +99,8 @@ bool EngineManager::MainLoopProcess()
             WaitForSingleObject(event, INFINITE);
             CloseHandle(event);
         }
-        cmdAllocator->Reset();//キューをクリア
-        cmdList->Reset(cmdAllocator, nullptr);//再びコマンドリストをためる準備
+        graphicsManager->cmdAllocator->Reset();//キューをクリア
+        graphicsManager->cmdList->Reset(graphicsManager->cmdAllocator, nullptr);//再びコマンドリストをためる準備
 
         //フリップ
         swapchainManager->swapchain->Present(1, 0);
@@ -136,19 +139,13 @@ bool EngineManager::initializeDeviceManager()
 bool EngineManager::initializeGraphicsManager()
 {
     //コマンドリスト
-    deviceManager->device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAllocator));
-    deviceManager->device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdAllocator, nullptr, IID_PPV_ARGS(&cmdList));
-    D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {};
-    cmdQueueDesc.NodeMask = 0;
-    cmdQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-    cmdQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-    deviceManager->device->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&cmdQueue));
+    graphicsManager=new GraphicsManager(deviceManager->device);
 
     //スワップチェーン
     swapchainManager = new SwapchainManager(
         deviceManager->dxgiFactory,
         window_width, window_height,
-        cmdQueue,
+        graphicsManager->cmdQueue,
         windowMamager->hwnd
     );
 
