@@ -13,7 +13,7 @@ LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 }
 
 
-WindowManager::WindowManager(unsigned int window_width, unsigned int window_height)
+WindowManager::WindowManager(const unsigned int window_width, const unsigned int window_height)
 {
     wndClass.cbSize = sizeof(WNDCLASSEX);
     wndClass.lpfnWndProc = (WNDPROC)WindowProcedure;

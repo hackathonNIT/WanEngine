@@ -58,7 +58,7 @@ bool EngineManager::MainLoopProcess()
         }
 
         //directxの処理
-        auto bbIdx = swapchain->GetCurrentBackBufferIndex();
+        auto bbIdx = swapchainManager->swapchain->GetCurrentBackBufferIndex();
         
         D3D12_RESOURCE_BARRIER BarrierDesc = {};
         BarrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -100,7 +100,7 @@ bool EngineManager::MainLoopProcess()
         cmdList->Reset(cmdAllocator, nullptr);//再びコマンドリストをためる準備
 
         //フリップ
-        swapchain->Present(1, 0);
+        swapchainManager->swapchain->Present(1, 0);
 
     }
 
@@ -145,21 +145,12 @@ bool EngineManager::initializeGraphicsManager()
     deviceManager->device->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&cmdQueue));
 
     //スワップチェーン
-    DXGI_SWAP_CHAIN_DESC1 swapchainDesc = {};
-    swapchainDesc.Width = window_width;
-    swapchainDesc.Height = window_height;
-    swapchainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    swapchainDesc.Stereo = false;
-    swapchainDesc.SampleDesc.Count = 1;
-    swapchainDesc.SampleDesc.Quality = 0;
-    swapchainDesc.BufferUsage = DXGI_USAGE_BACK_BUFFER;
-    swapchainDesc.BufferCount = 2;
-    swapchainDesc.Scaling = DXGI_SCALING_STRETCH;
-    swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-    swapchainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
-    swapchainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-
-    deviceManager->dxgiFactory->CreateSwapChainForHwnd(cmdQueue, windowMamager->hwnd, &swapchainDesc, nullptr, nullptr, (IDXGISwapChain1**)&swapchain);
+    swapchainManager = new SwapchainManager(
+        deviceManager->dxgiFactory,
+        window_width, window_height,
+        cmdQueue,
+        windowMamager->hwnd
+    );
 
     D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
     heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -168,12 +159,12 @@ bool EngineManager::initializeGraphicsManager()
     heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     deviceManager->device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&rtvHeaps));
     DXGI_SWAP_CHAIN_DESC swcDesc = {};
-    swapchain->GetDesc(&swcDesc);
+    swapchainManager->swapchain->GetDesc(&swcDesc);
     std::cout << swcDesc.BufferCount << std::endl;
     backBuffers = std::vector<ID3D12Resource*>(swcDesc.BufferCount);
     D3D12_CPU_DESCRIPTOR_HANDLE handle = rtvHeaps->GetCPUDescriptorHandleForHeapStart();
     for (size_t i = 0; i < swcDesc.BufferCount; ++i) {
-        swapchain->GetBuffer(static_cast<UINT>(i), IID_PPV_ARGS(&backBuffers[i]));
+        swapchainManager->swapchain->GetBuffer(static_cast<UINT>(i), IID_PPV_ARGS(&backBuffers[i]));
         deviceManager->device->CreateRenderTargetView(backBuffers[i], nullptr, handle);
         handle.ptr += deviceManager->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     }

@@ -8,6 +8,7 @@
 
 #include "Window/WindowManager.h"
 #include "Device/DeviceManager.h"
+#include "Swapchain/SwapchainManager.h"
 
 
 
@@ -17,12 +18,13 @@ private:
 	friend Singleton<EngineManager>;
 
 	//ウィンドウ
-	WindowManager* windowMamager;
+	WindowManager* windowMamager = nullptr;
 
 	//デバイス
-	DeviceManager* deviceManager;
+	DeviceManager* deviceManager = nullptr;
 
-	IDXGISwapChain4* swapchain = nullptr;
+	//スワップチェーン
+	SwapchainManager* swapchainManager = nullptr;
 
 	
 	//コマンド

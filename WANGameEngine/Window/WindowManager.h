@@ -10,7 +10,7 @@ private:
 public:
 	HWND hwnd;
 	WNDCLASSEX wndClass = {};
-	WindowManager(unsigned int window_width, unsigned int window_height);
+	WindowManager(const unsigned int window_width, const unsigned int window_height);
 	~WindowManager();
 
 };
