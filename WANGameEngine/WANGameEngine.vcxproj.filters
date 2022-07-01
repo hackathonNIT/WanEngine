@@ -38,4 +38,8 @@
       <Filter>リソース ファイル</Filter>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Shader\BasicVertexShader.hlsl" />
+    <FxCompile Include="Shader\BasicPixelShader.hlsl" />
+  </ItemGroup>
 </Project>
