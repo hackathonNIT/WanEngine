@@ -13,9 +13,13 @@
 
 #include<iostream>
 
+
+#include<d3dcompiler.h>
+
 #pragma comment(lib,"DirectXTex.lib")
 #pragma comment(lib,"d3d12.lib")
 #pragma comment(lib,"dxgi.lib")
+#pragma comment(lib,"d3dcompiler.lib")
 #pragma comment(lib,"d3dcompiler.lib")
 
 LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
@@ -41,6 +45,8 @@ bool EngineManager::initializeManager()
     Result = initializeWindowManager();
     Result &= initializeDeviseManager();
     Result &= initializeGraphicsManager();
+    Result &= initializeResourceManager();
+    Result &= initializeShaderManager();
     return Result;
 }
 
@@ -232,6 +238,105 @@ bool EngineManager::initializeGraphicsManager()
     }
     
     device->CreateFence(fenceVal, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
+
+    return true;
+}
+
+bool EngineManager::initializeResourceManager()
+{
+    DirectX::XMFLOAT3 vertices[] = {
+        {-0.4f,-0.7f,0.0f} ,//左下
+        {-0.4f,0.7f,0.0f} ,//左上
+        {0.4f,-0.7f,0.0f} ,//右下
+        {0.4f,0.7f,0.0f} ,//右上
+    };
+
+    D3D12_HEAP_PROPERTIES heapprop = {};
+    heapprop.Type = D3D12_HEAP_TYPE_UPLOAD;
+    heapprop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    heapprop.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+
+
+    D3D12_RESOURCE_DESC resdesc = {};
+    resdesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    resdesc.Width = sizeof(vertices);
+    resdesc.Height = 1;
+    resdesc.DepthOrArraySize = 1;
+    resdesc.MipLevels = 1;
+    resdesc.Format = DXGI_FORMAT_UNKNOWN;
+    resdesc.SampleDesc.Count = 1;
+    resdesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+    resdesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+    //UPLOAD(確保は可能)
+    ID3D12Resource* vertBuff = nullptr;
+    device->CreateCommittedResource(
+        &heapprop,
+        D3D12_HEAP_FLAG_NONE,
+        &resdesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&vertBuff));
+
+    
+    //バッファーに頂点情報をコピー
+    DirectX::XMFLOAT3* vertMap = nullptr;
+    vertBuff->Map(0, nullptr, (void**)&vertMap);
+    std::copy(std::begin(vertices), std::end(vertices), vertMap);
+    vertBuff->Unmap(0, nullptr);
+    D3D12_VERTEX_BUFFER_VIEW vbView = {};
+    vbView.BufferLocation = vertBuff->GetGPUVirtualAddress();
+    vbView.SizeInBytes = sizeof(vertices);
+    vbView.StrideInBytes = sizeof(vertices[0]);
+
+    return true;
+}
+
+bool EngineManager::initializeShaderManager()
+{
+    ID3DBlob* _vsBlob = nullptr;
+    ID3DBlob* _psBlob = nullptr;
+
+    ID3DBlob* errorBlob = nullptr;
+
+    //後で関数とかにして使いやすくする
+    auto result = D3DCompileFromFile(L"Shader/BasicVertexShader.hlsl",
+        nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+        "BasicVS", "vs_5_0",
+        D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+        0, &_vsBlob, &errorBlob);
+    if (FAILED(result)) {
+        if (result == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) {
+            std::cout << "ファイルが見当たりません"<<std::endl;
+        }
+        else {
+            std::string errstr;
+            errstr.resize(errorBlob->GetBufferSize());
+            std::copy_n((char*)errorBlob->GetBufferPointer(), errorBlob->GetBufferSize(), errstr.begin());
+            errstr += "\n";
+            std::cout << errstr.c_str() << std::endl;
+        }
+        return false;
+    }
+    result = D3DCompileFromFile(L"Shader/BasicPixelShader.hlsl",
+        nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+        "BasicPS", "ps_5_0",
+        D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+        0, &_psBlob, &errorBlob);
+    if (FAILED(result)) {
+        if (result == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) {
+            std::cout << "ファイルが見当たりません" << std::endl;;
+        }
+        else {
+            std::string errstr;
+            errstr.resize(errorBlob->GetBufferSize());
+            std::copy_n((char*)errorBlob->GetBufferPointer(), errorBlob->GetBufferSize(), errstr.begin());
+            errstr += "\n";
+            std::cout << errstr.c_str() << std::endl;
+        }
+        return false;
+    }
+
 
     return true;
 }
