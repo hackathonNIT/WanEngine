@@ -7,6 +7,7 @@
 #include<vector>
 
 #include "Window/WindowManager.h"
+#include "Device/DeviceManager.h"
 
 
 
@@ -19,9 +20,10 @@ private:
 	WindowManager* windowMamager;
 
 	//デバイス
-	ID3D12Device* device = nullptr;
-	IDXGIFactory6* dxgiFactory = nullptr;
+	DeviceManager* deviceManager;
+
 	IDXGISwapChain4* swapchain = nullptr;
+
 	
 	//コマンド
 	ID3D12CommandAllocator* cmdAllocator = nullptr;
@@ -50,7 +52,7 @@ public:
 	bool MainLoopProcess();
 	
 	bool initializeWindowManager();//windowの初期化
-	bool initializeDeviseManager();//deviceの初期化
+	bool initializeDeviceManager();//deviceの初期化
 	bool initializeGraphicsManager();//graphicの初期化
 	bool initializeResourceManager();//resourceの初期化
 	bool initializeShaderManager();//Shaderの初期化

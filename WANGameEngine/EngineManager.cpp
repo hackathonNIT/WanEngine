@@ -36,7 +36,7 @@ bool EngineManager::initializeManager()
 {
     bool Result = false;
     Result = initializeWindowManager();
-    Result &= initializeDeviseManager();
+    Result &= initializeDeviceManager();
     Result &= initializeGraphicsManager();
     Result &= initializeResourceManager();
     Result &= initializeShaderManager();
@@ -70,7 +70,7 @@ bool EngineManager::MainLoopProcess()
         cmdList->ResourceBarrier(1, &BarrierDesc);
 
         auto rtvH = rtvHeaps->GetCPUDescriptorHandleForHeapStart();
-        rtvH.ptr += bbIdx * device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        rtvH.ptr += bbIdx * deviceManager->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
         cmdList->OMSetRenderTargets(1, &rtvH, true, nullptr);
 
@@ -114,6 +114,7 @@ bool EngineManager::MainLoopProcess()
 
 /**************************initialize**************************/
 
+
 bool EngineManager::initializeWindowManager()
 {
     windowMamager = new WindowManager(window_width, window_height);
@@ -125,44 +126,9 @@ bool EngineManager::initializeWindowManager()
     return true;
 }
 
-bool EngineManager::initializeDeviseManager()
+bool EngineManager::initializeDeviceManager()
 {
-    D3D_FEATURE_LEVEL levels[] = {
-        D3D_FEATURE_LEVEL_12_1,
-        D3D_FEATURE_LEVEL_12_0,
-        D3D_FEATURE_LEVEL_11_1,
-        D3D_FEATURE_LEVEL_11_0,
-    };
-
-    //任意のアダプターを選択する場合
-    //アダプター列挙
-    CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory));
-    std::vector<IDXGIAdapter*> adapters;
-    IDXGIAdapter* adapter = nullptr;//使うアダプターを入れる
-    IDXGIAdapter* tmpAdapter = nullptr;
-    for (int i = 0; dxgiFactory->EnumAdapters(i, &tmpAdapter) != DXGI_ERROR_NOT_FOUND; i++) {
-        adapters.push_back(tmpAdapter);
-    }
-    for (auto a : adapters) {
-        DXGI_ADAPTER_DESC adesc = {};
-        a->GetDesc(&adesc);
-        std::wstring strDesc = adesc.Description;
-
-        if (strDesc.find(L"NVIDIA")!=std::string::npos) {
-            adapter = a;
-            break;
-        }
-    }
-
-
-    //Direct3Dデバイスの初期化
-    D3D_FEATURE_LEVEL featureLevel;
-    for (auto l : levels) {
-        if (D3D12CreateDevice(adapter, l, IID_PPV_ARGS(&device)) == S_OK) {
-            featureLevel = l;
-            break;
-        }
-    }
+    deviceManager = new DeviceManager();
 
     return true;
 }
@@ -170,13 +136,13 @@ bool EngineManager::initializeDeviseManager()
 bool EngineManager::initializeGraphicsManager()
 {
     //コマンドリスト
-    device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAllocator));
-    device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdAllocator, nullptr, IID_PPV_ARGS(&cmdList));
+    deviceManager->device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAllocator));
+    deviceManager->device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdAllocator, nullptr, IID_PPV_ARGS(&cmdList));
     D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {};
     cmdQueueDesc.NodeMask = 0;
     cmdQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
     cmdQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-    device->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&cmdQueue));
+    deviceManager->device->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&cmdQueue));
 
     //スワップチェーン
     DXGI_SWAP_CHAIN_DESC1 swapchainDesc = {};
@@ -193,14 +159,14 @@ bool EngineManager::initializeGraphicsManager()
     swapchainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
     swapchainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
-    dxgiFactory->CreateSwapChainForHwnd(cmdQueue, windowMamager->hwnd, &swapchainDesc, nullptr, nullptr, (IDXGISwapChain1**)&swapchain);
+    deviceManager->dxgiFactory->CreateSwapChainForHwnd(cmdQueue, windowMamager->hwnd, &swapchainDesc, nullptr, nullptr, (IDXGISwapChain1**)&swapchain);
 
     D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
     heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
     heapDesc.NodeMask = 0;
     heapDesc.NumDescriptors = 2;//表裏の２つ
     heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&rtvHeaps));
+    deviceManager->device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&rtvHeaps));
     DXGI_SWAP_CHAIN_DESC swcDesc = {};
     swapchain->GetDesc(&swcDesc);
     std::cout << swcDesc.BufferCount << std::endl;
@@ -208,11 +174,11 @@ bool EngineManager::initializeGraphicsManager()
     D3D12_CPU_DESCRIPTOR_HANDLE handle = rtvHeaps->GetCPUDescriptorHandleForHeapStart();
     for (size_t i = 0; i < swcDesc.BufferCount; ++i) {
         swapchain->GetBuffer(static_cast<UINT>(i), IID_PPV_ARGS(&backBuffers[i]));
-        device->CreateRenderTargetView(backBuffers[i], nullptr, handle);
-        handle.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        deviceManager->device->CreateRenderTargetView(backBuffers[i], nullptr, handle);
+        handle.ptr += deviceManager->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     }
     
-    device->CreateFence(fenceVal, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
+    deviceManager->device->CreateFence(fenceVal, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
 
     return true;
 }
@@ -245,7 +211,7 @@ bool EngineManager::initializeResourceManager()
 
     //UPLOAD(確保は可能)
     ID3D12Resource* vertBuff = nullptr;
-    device->CreateCommittedResource(
+    deviceManager->device->CreateCommittedResource(
         &heapprop,
         D3D12_HEAP_FLAG_NONE,
         &resdesc,
