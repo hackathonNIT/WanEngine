@@ -22,13 +22,6 @@
 #pragma comment(lib,"d3dcompiler.lib")
 #pragma comment(lib,"d3dcompiler.lib")
 
-LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
-    if (msg == WM_DESTROY) {
-        PostQuitMessage(0);
-        return 0;
-    }
-    return DefWindowProc(hwnd, msg, wparam, lparam);
-}
 
 
 EngineManager::EngineManager()
@@ -52,7 +45,7 @@ bool EngineManager::initializeManager()
 
 bool EngineManager::MainLoopProcess()
 {
-    ShowWindow(hwnd, SW_SHOW);
+    ShowWindow(windowMamager->hwnd, SW_SHOW);
     MSG msg = {};
     //MainLoop
     while (1) {
@@ -111,7 +104,7 @@ bool EngineManager::MainLoopProcess()
 
     }
 
-    UnregisterClass(wndClass.lpszClassName, wndClass.hInstance);
+    UnregisterClass(windowMamager->wndClass.lpszClassName, windowMamager->wndClass.hInstance);
     return true;
 }
 
@@ -123,26 +116,8 @@ bool EngineManager::MainLoopProcess()
 
 bool EngineManager::initializeWindowManager()
 {
-    wndClass.cbSize = sizeof(WNDCLASSEX);
-    wndClass.lpfnWndProc = (WNDPROC)WindowProcedure;
-    wndClass.lpszClassName = _T("DirectXTest");
-    wndClass.hInstance = GetModuleHandle(0);
-    RegisterClassEx(&wndClass);
-    RECT wrc = { 0,0, window_width, window_height };
-    AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);
-    //ウィンドウオブジェクトの生成
-    hwnd = CreateWindow(wndClass.lpszClassName,
-        _T("ウィンドウ"),
-        WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        wrc.right - wrc.left,
-        wrc.bottom - wrc.top,
-        nullptr,
-        nullptr,
-        wndClass.hInstance,
-        nullptr);
-    if (hwnd == 0)return false;
+    windowMamager = new WindowManager(window_width, window_height);
+    if (windowMamager->hwnd == 0)return false;
 #ifdef _DEBUG
     //デバッグレイヤーをオンに
     EnableDebugLayer();
@@ -218,7 +193,7 @@ bool EngineManager::initializeGraphicsManager()
     swapchainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
     swapchainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
-    dxgiFactory->CreateSwapChainForHwnd(cmdQueue, hwnd, &swapchainDesc, nullptr, nullptr, (IDXGISwapChain1**)&swapchain);
+    dxgiFactory->CreateSwapChainForHwnd(cmdQueue, windowMamager->hwnd, &swapchainDesc, nullptr, nullptr, (IDXGISwapChain1**)&swapchain);
 
     D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
     heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;

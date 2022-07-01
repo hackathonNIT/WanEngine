@@ -151,11 +151,13 @@
   <ItemGroup>
     <ClCompile Include="EngineManager.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Window\WindowManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineManager.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Singleton.h" />
+    <ClInclude Include="Window\WindowManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="WANGameEngine.rc" />
