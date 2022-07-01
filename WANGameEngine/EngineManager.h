@@ -48,5 +48,8 @@ public:
 	bool initializeWindowManager();//window‚Ì‰Šú‰»
 	bool initializeDeviseManager();//device‚Ì‰Šú‰»
 	bool initializeGraphicsManager();//graphic‚Ì‰Šú‰»
+	bool initializeResourceManager();//resource‚Ì‰Šú‰»
+	bool initializeShaderManager();//Shader‚Ì‰Šú‰»
+
 	void EnableDebugLayer();
 };
