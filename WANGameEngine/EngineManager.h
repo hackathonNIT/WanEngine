@@ -8,6 +8,7 @@
 
 #include "Window/WindowManager.h"
 #include "Device/DeviceManager.h"
+#include "Graphics/GraphicsManager.h"
 #include "Swapchain/SwapchainManager.h"
 
 
@@ -28,9 +29,7 @@ private:
 
 	
 	//ƒRƒ}ƒ“ƒh
-	ID3D12CommandAllocator* cmdAllocator = nullptr;
-	ID3D12GraphicsCommandList* cmdList = nullptr;
-	ID3D12CommandQueue* cmdQueue = nullptr;
+	GraphicsManager* graphicsManager = nullptr;
 
 	ID3D12DescriptorHeap* rtvHeaps = nullptr;
 
