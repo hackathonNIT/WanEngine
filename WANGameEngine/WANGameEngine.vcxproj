@@ -153,6 +153,7 @@
     <ClCompile Include="EngineManager.cpp" />
     <ClCompile Include="Graphics\GraphicsManager.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Resource\ResourceManager.cpp" />
     <ClCompile Include="Shader\ShaderManager.cpp" />
     <ClCompile Include="Swapchain\SwapchainManager.cpp" />
     <ClCompile Include="Window\WindowManager.cpp" />
@@ -162,6 +163,7 @@
     <ClInclude Include="EngineManager.h" />
     <ClInclude Include="Graphics\GraphicsManager.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Resource\ResourceManager.h" />
     <ClInclude Include="Shader\ShaderManager.h" />
     <ClInclude Include="Singleton.h" />
     <ClInclude Include="Swapchain\SwapchainManager.h" />
