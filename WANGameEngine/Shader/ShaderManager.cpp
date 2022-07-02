@@ -14,7 +14,7 @@ ShaderManager::~ShaderManager()
 {
 }
 
-bool ShaderManager::readShader(LPCWSTR file, LPCSTR funcName, LPCSTR target, ID3DBlob* blob)
+bool ShaderManager::readShader(LPCWSTR file, LPCSTR funcName, LPCSTR target, ID3DBlob*& blob)
 {
     ID3DBlob* errorBlob = nullptr;
     auto result = D3DCompileFromFile(file,
