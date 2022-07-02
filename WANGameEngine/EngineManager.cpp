@@ -223,50 +223,7 @@ bool EngineManager::initializeResourceManager()
 
 bool EngineManager::initializeShaderManager()
 {
-    ID3DBlob* _vsBlob = nullptr;
-    ID3DBlob* _psBlob = nullptr;
-
-    ID3DBlob* errorBlob = nullptr;
-
-    //後で関数とかにして使いやすくする
-    auto result = D3DCompileFromFile(L"Shader/BasicVertexShader.hlsl",
-        nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-        "BasicVS", "vs_5_0",
-        D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-        0, &_vsBlob, &errorBlob);
-    if (FAILED(result)) {
-        if (result == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) {
-            std::cout << "ファイルが見当たりません"<<std::endl;
-        }
-        else {
-            std::string errstr;
-            errstr.resize(errorBlob->GetBufferSize());
-            std::copy_n((char*)errorBlob->GetBufferPointer(), errorBlob->GetBufferSize(), errstr.begin());
-            errstr += "\n";
-            std::cout << errstr.c_str() << std::endl;
-        }
-        return false;
-    }
-    result = D3DCompileFromFile(L"Shader/BasicPixelShader.hlsl",
-        nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-        "BasicPS", "ps_5_0",
-        D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-        0, &_psBlob, &errorBlob);
-    if (FAILED(result)) {
-        if (result == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) {
-            std::cout << "ファイルが見当たりません" << std::endl;;
-        }
-        else {
-            std::string errstr;
-            errstr.resize(errorBlob->GetBufferSize());
-            std::copy_n((char*)errorBlob->GetBufferPointer(), errorBlob->GetBufferSize(), errstr.begin());
-            errstr += "\n";
-            std::cout << errstr.c_str() << std::endl;
-        }
-        return false;
-    }
-
-
+    shaderManager = new ShaderManager();
     return true;
 }
 

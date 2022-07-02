@@ -10,6 +10,7 @@
 #include "Device/DeviceManager.h"
 #include "Graphics/GraphicsManager.h"
 #include "Swapchain/SwapchainManager.h"
+#include "Shader/ShaderManager.h"
 
 
 
@@ -39,6 +40,9 @@ private:
 	//フェンス
 	ID3D12Fence* fence = nullptr;
 	UINT64 fenceVal = 0;
+
+	//シェーダー
+	ShaderManager* shaderManager = nullptr;
 
 	//ウィンドウサイズ
 	const unsigned int window_width = 1280;
