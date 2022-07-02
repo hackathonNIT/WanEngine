@@ -14,5 +14,5 @@ public:
     ShaderManager();
     ~ShaderManager();
 
-    bool readShader(LPCWSTR file, LPCSTR funcName, LPCSTR target, ID3DBlob* blob);
+    bool readShader(LPCWSTR file, LPCSTR funcName, LPCSTR target, ID3DBlob*& blob);
 };
