@@ -9,12 +9,8 @@
 
 #include<d3dcompiler.h>
 
-#include<d3dx12.h>
-
 #include<iostream>
 
-
-#include<d3dcompiler.h>
 
 #pragma comment(lib,"DirectXTex.lib")
 #pragma comment(lib,"d3d12.lib")
@@ -173,50 +169,20 @@ bool EngineManager::initializeGraphicsManager()
 
 bool EngineManager::initializeResourceManager()
 {
-    DirectX::XMFLOAT3 vertices[] = {
-        {-0.4f,-0.7f,0.0f} ,//左下
-        {-0.4f,0.7f,0.0f} ,//左上
-        {0.4f,-0.7f,0.0f} ,//右下
-        {0.4f,0.7f,0.0f} ,//右上
-    };
-
-    D3D12_HEAP_PROPERTIES heapprop = {};
-    heapprop.Type = D3D12_HEAP_TYPE_UPLOAD;
-    heapprop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-    heapprop.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-
-
-    D3D12_RESOURCE_DESC resdesc = {};
-    resdesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    resdesc.Width = sizeof(vertices);
-    resdesc.Height = 1;
-    resdesc.DepthOrArraySize = 1;
-    resdesc.MipLevels = 1;
-    resdesc.Format = DXGI_FORMAT_UNKNOWN;
-    resdesc.SampleDesc.Count = 1;
-    resdesc.Flags = D3D12_RESOURCE_FLAG_NONE;
-    resdesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-
-    //UPLOAD(確保は可能)
-    ID3D12Resource* vertBuff = nullptr;
+    
+    resourceManager = new ResourceManager();
+    
     deviceManager->device->CreateCommittedResource(
-        &heapprop,
+        &resourceManager->heapprop,
         D3D12_HEAP_FLAG_NONE,
-        &resdesc,
+        &resourceManager->resdesc,
         D3D12_RESOURCE_STATE_GENERIC_READ,
         nullptr,
-        IID_PPV_ARGS(&vertBuff));
+        IID_PPV_ARGS(&resourceManager->vertBuff));
 
-    
-    //バッファーに頂点情報をコピー
-    DirectX::XMFLOAT3* vertMap = nullptr;
-    vertBuff->Map(0, nullptr, (void**)&vertMap);
-    std::copy(std::begin(vertices), std::end(vertices), vertMap);
-    vertBuff->Unmap(0, nullptr);
-    D3D12_VERTEX_BUFFER_VIEW vbView = {};
-    vbView.BufferLocation = vertBuff->GetGPUVirtualAddress();
-    vbView.SizeInBytes = sizeof(vertices);
-    vbView.StrideInBytes = sizeof(vertices[0]);
+
+    //書き込み
+    resourceManager->write();
 
     return true;
 }

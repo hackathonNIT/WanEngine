@@ -10,7 +10,9 @@
 #include "Device/DeviceManager.h"
 #include "Graphics/GraphicsManager.h"
 #include "Swapchain/SwapchainManager.h"
+#include "Resource/ResourceManager.h"
 #include "Shader/ShaderManager.h"
+
 
 
 
@@ -40,6 +42,9 @@ private:
 	//フェンス
 	ID3D12Fence* fence = nullptr;
 	UINT64 fenceVal = 0;
+
+	//リソース
+	ResourceManager* resourceManager = nullptr;
 
 	//シェーダー
 	ShaderManager* shaderManager = nullptr;
