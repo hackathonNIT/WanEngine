@@ -4,19 +4,19 @@
 
 #pragma comment(lib,"d3d12.lib")
 
-LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
-    if (msg == WM_DESTROY) {
-        PostQuitMessage(0);
-        return 0;
-    }
-    return DefWindowProc(hwnd, msg, wparam, lparam);
-}
+//LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
+//    if (msg == WM_DESTROY) {
+//        PostQuitMessage(0);
+//        return 0;
+//    }
+//    return DefWindowProc(hwnd, msg, wparam, lparam);
+//}
 
 
 WindowManager::WindowManager(const unsigned int window_width, const unsigned int window_height)
 {
     wndClass.cbSize = sizeof(WNDCLASSEX);
-    wndClass.lpfnWndProc = (WNDPROC)WindowProcedure;
+    //wndClass.lpfnWndProc = (WNDPROC)WindowProcedure;
     wndClass.lpszClassName = _T("DirectXTest");
     wndClass.hInstance = GetModuleHandle(0);
     RegisterClassEx(&wndClass);
