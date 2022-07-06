@@ -31,9 +31,9 @@ EngineManager::~EngineManager()
 bool EngineManager::initializeManager()
 {
     bool Result = false;
-    Result = initializeWindowManager();
-    Result &= initializeDeviceManager();
-    Result &= initializeGraphicsManager();
+    //Result = initializeWindowManager();
+    //Result &= initializeDeviceManager();
+    Result = initializeGraphicsManager();
     Result &= initializeResourceManager();
     Result &= initializeShaderManager();
     return Result;
@@ -41,7 +41,7 @@ bool EngineManager::initializeManager()
 
 bool EngineManager::MainLoopProcess()
 {
-    ShowWindow(windowMamager->hwnd, SW_SHOW);
+    ShowWindow(graphicsManager->hwnd, SW_SHOW);
     MSG msg = {};
     //MainLoop
     while (1) {
@@ -69,7 +69,7 @@ bool EngineManager::MainLoopProcess()
         graphicsManager->cmdList->ResourceBarrier(1, &BarrierDesc);
 
         auto rtvH = rtvHeaps->GetCPUDescriptorHandleForHeapStart();
-        rtvH.ptr += bbIdx * deviceManager->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        rtvH.ptr += bbIdx * graphicsManager->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
         graphicsManager->cmdList->OMSetRenderTargets(1, &rtvH, true, nullptr);
 
@@ -103,7 +103,7 @@ bool EngineManager::MainLoopProcess()
 
     }
 
-    UnregisterClass(windowMamager->wndClass.lpszClassName, windowMamager->wndClass.hInstance);
+    UnregisterClass(graphicsManager->wndClass.lpszClassName, graphicsManager->wndClass.hInstance);
     return true;
 }
 
@@ -135,14 +135,16 @@ bool EngineManager::initializeDeviceManager()
 bool EngineManager::initializeGraphicsManager()
 {
     //コマンドリスト
-    graphicsManager=new GraphicsManager(deviceManager->device);
+    graphicsManager=new GraphicsManager(window_width, window_height);
+    
+    bool Result=graphicsManager->initializeGraphicsManager();
 
     //スワップチェーン
     swapchainManager = new SwapchainManager(
-        deviceManager->dxgiFactory,
+        graphicsManager->dxgiFactory,
         window_width, window_height,
         graphicsManager->cmdQueue,
-        windowMamager->hwnd
+        graphicsManager->hwnd
     );
 
     D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
@@ -150,7 +152,7 @@ bool EngineManager::initializeGraphicsManager()
     heapDesc.NodeMask = 0;
     heapDesc.NumDescriptors = 2;//表裏の２つ
     heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    deviceManager->device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&rtvHeaps));
+    graphicsManager->device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&rtvHeaps));
     DXGI_SWAP_CHAIN_DESC swcDesc = {};
     swapchainManager->swapchain->GetDesc(&swcDesc);
     std::cout << swcDesc.BufferCount << std::endl;
@@ -158,13 +160,13 @@ bool EngineManager::initializeGraphicsManager()
     D3D12_CPU_DESCRIPTOR_HANDLE handle = rtvHeaps->GetCPUDescriptorHandleForHeapStart();
     for (size_t i = 0; i < swcDesc.BufferCount; ++i) {
         swapchainManager->swapchain->GetBuffer(static_cast<UINT>(i), IID_PPV_ARGS(&backBuffers[i]));
-        deviceManager->device->CreateRenderTargetView(backBuffers[i], nullptr, handle);
-        handle.ptr += deviceManager->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        graphicsManager->device->CreateRenderTargetView(backBuffers[i], nullptr, handle);
+        handle.ptr += graphicsManager->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     }
     
-    deviceManager->device->CreateFence(fenceVal, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
+    graphicsManager->device->CreateFence(fenceVal, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
 
-    return true;
+    return Result;
 }
 
 bool EngineManager::initializeResourceManager()
@@ -172,7 +174,7 @@ bool EngineManager::initializeResourceManager()
     
     resourceManager = new ResourceManager();
     
-    deviceManager->device->CreateCommittedResource(
+    graphicsManager->device->CreateCommittedResource(
         &resourceManager->heapprop,
         D3D12_HEAP_FLAG_NONE,
         &resourceManager->resdesc,

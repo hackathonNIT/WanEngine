@@ -13,4 +13,6 @@ public:
 	WindowManager(const unsigned int window_width, const unsigned int window_height);
 	~WindowManager();
 
+	
+
 };
