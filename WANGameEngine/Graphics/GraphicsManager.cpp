@@ -19,6 +19,19 @@ GraphicsManager::GraphicsManager(const unsigned int window_width, const unsigned
 {
     this->window_height = window_height;
     this->window_width = window_width;
+
+    viewport.Width = window_width;//出力先の幅(ピクセル数)
+    viewport.Height = window_height;//出力先の高さ(ピクセル数)
+    viewport.TopLeftX = 0;//出力先の左上座標X
+    viewport.TopLeftY = 0;//出力先の左上座標Y
+    viewport.MaxDepth = 1.0f;//深度最大値
+    viewport.MinDepth = 0.0f;//深度最小値
+
+
+    scissorrect.top = 0;//切り抜き上座標
+    scissorrect.left = 0;//切り抜き左座標
+    scissorrect.right = scissorrect.left + window_width;//切り抜き右座標
+    scissorrect.bottom = scissorrect.top + window_height;//切り抜き下座標
 }
 
 GraphicsManager::~GraphicsManager()
@@ -63,6 +76,7 @@ void GraphicsManager::draw()
     BarrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
     BarrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
     cmdList->ResourceBarrier(1, &BarrierDesc);
+    cmdList->SetPipelineState(pipelinestate);
 
     auto rtvH = rtvHeaps->GetCPUDescriptorHandleForHeapStart();
     rtvH.ptr += bbIdx * device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -70,8 +84,22 @@ void GraphicsManager::draw()
     cmdList->OMSetRenderTargets(1, &rtvH, true, nullptr);
 
     //画面クリア
-    float clearColor[] = { 1.0f,1.0f,0.0f,1.0f };
+    float clearColor[] = { 0.0f,1.0f,0.0f,1.0f };
     cmdList->ClearRenderTargetView(rtvH, clearColor, 0, nullptr);
+
+
+    cmdList->RSSetViewports(1, &viewport);
+    cmdList->RSSetScissorRects(1, &scissorrect);
+    cmdList->SetGraphicsRootSignature(rootsignature);
+
+    cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    cmdList->IASetVertexBuffers(0, 1, &vbView);
+    cmdList->IASetIndexBuffer(&ibView);
+
+
+    //_cmdList->DrawInstanced(4, 1, 0, 0);
+    cmdList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+
 
     BarrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
     BarrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
@@ -401,7 +429,7 @@ bool GraphicsManager::initializeShader()
     gpipeline.SampleDesc.Count = 1;//サンプリングは1ピクセルにつき１
     gpipeline.SampleDesc.Quality = 0;//クオリティは最低
 
-    ID3D12RootSignature* rootsignature = nullptr;
+    
 
     D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
     rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
@@ -414,6 +442,8 @@ bool GraphicsManager::initializeShader()
     gpipeline.pRootSignature = rootsignature;
     
     device->CreateGraphicsPipelineState(&gpipeline, IID_PPV_ARGS(&pipelinestate));
+
+    
 
     return true;
 }
