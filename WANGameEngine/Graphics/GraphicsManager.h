@@ -51,6 +51,11 @@ private:
 
 	ID3D12PipelineState* pipelinestate = nullptr;
 
+	ID3D12RootSignature* rootsignature = nullptr;
+
+	D3D12_VIEWPORT viewport = {};
+	D3D12_RECT scissorrect = {};
+
 	bool initializeWindow();
 	bool initializeDevice();
 	bool initializeCommand();
