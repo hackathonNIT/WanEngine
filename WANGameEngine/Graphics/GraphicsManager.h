@@ -46,6 +46,9 @@ private:
 	D3D12_RESOURCE_DESC resdesc = {};
 	ID3D12Resource* vertBuff = nullptr;
 
+	D3D12_VERTEX_BUFFER_VIEW vbView = {};
+	D3D12_INDEX_BUFFER_VIEW ibView = {};
+
 	bool initializeWindow();
 	bool initializeDevice();
 	bool initializeCommand();
@@ -54,6 +57,7 @@ private:
 	bool initializeBuffer();
 	bool initializeFance();
 	bool initializeResource();
+	bool initializeView();
 public:
 	
 
