@@ -36,11 +36,10 @@ private:
 	ID3D12Fence* fence = nullptr;
 	UINT64 fenceVal = 0;
 
-	DirectX::XMFLOAT3 vertices[4] = {
-		{-0.4f,-0.7f,0.0f} ,//ç∂â∫
-		{-0.4f,0.7f,0.0f} ,//ç∂è„
-		{0.4f,-0.7f,0.0f} ,//âEâ∫
-		{0.4f,0.7f,0.0f} ,//âEè„
+	DirectX::XMFLOAT3 vertices[3] = {
+		{-0.5f,-0.7f,0.0f} ,//ç∂â∫
+		{-0.0f,0.7f,0.0f} ,//ç∂è„
+		{0.5f,-0.7f,0.0f} //âEâ∫
 	};
 	D3D12_HEAP_PROPERTIES heapprop = {};
 	D3D12_RESOURCE_DESC resdesc = {};
@@ -75,7 +74,7 @@ public:
 
 	bool initializeGraphicsManager();
 
-	void showWindow();
+	//void showWindow();
 
 	void draw();
 

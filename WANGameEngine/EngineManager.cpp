@@ -38,7 +38,7 @@ bool EngineManager::initializeManager()
 
 bool EngineManager::MainLoopProcess()
 {
-    graphicsManager->showWindow();
+    //graphicsManager->showWindow();
     MSG msg = {};
     //MainLoop
     while (1) {

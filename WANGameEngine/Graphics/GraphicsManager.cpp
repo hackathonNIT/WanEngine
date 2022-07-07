@@ -15,6 +15,7 @@ LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 }
 
 
+
 GraphicsManager::GraphicsManager(const unsigned int window_width, const unsigned int window_height)
 {
     this->window_height = window_height;
@@ -55,10 +56,7 @@ bool GraphicsManager::initializeGraphicsManager()
     return Result;
 }
 
-void GraphicsManager::showWindow()
-{
-    ShowWindow(hwnd, SW_SHOW);
-}
+
 
 void GraphicsManager::draw()
 {
@@ -81,7 +79,7 @@ void GraphicsManager::draw()
     auto rtvH = rtvHeaps->GetCPUDescriptorHandleForHeapStart();
     rtvH.ptr += bbIdx * device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-    cmdList->OMSetRenderTargets(1, &rtvH, true, nullptr);
+    cmdList->OMSetRenderTargets(1, &rtvH, false, nullptr);
 
     //画面クリア
     float clearColor[] = { 0.0f,1.0f,0.0f,1.0f };
@@ -124,7 +122,7 @@ void GraphicsManager::draw()
 void GraphicsManager::resetCmd()
 {
     cmdAllocator->Reset();//キューをクリア
-    cmdList->Reset(cmdAllocator, nullptr);//再びコマンドリストをためる準備
+    cmdList->Reset(cmdAllocator, pipelinestate);//再びコマンドリストをためる準備
 
     //フリップ
     swapchain->Present(1, 0);
@@ -200,6 +198,7 @@ bool GraphicsManager::initializeCommand()
     device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAllocator));
     device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdAllocator, nullptr, IID_PPV_ARGS(&cmdList));
     D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {};
+    cmdQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     cmdQueueDesc.NodeMask = 0;
     cmdQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
     cmdQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
@@ -261,6 +260,11 @@ bool GraphicsManager::initializeFance()
 
 bool GraphicsManager::initializeResource()
 {
+    ShowWindow(hwnd, SW_SHOW);//
+
+
+    
+
     heapprop.Type = D3D12_HEAP_TYPE_UPLOAD;
     heapprop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     heapprop.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
@@ -320,7 +324,6 @@ bool GraphicsManager::initializeView()
     idxBuff->Unmap(0, nullptr);
     
     //インデックスバッファビューを作成
-    D3D12_INDEX_BUFFER_VIEW ibView = {};
     ibView.BufferLocation = idxBuff->GetGPUVirtualAddress();
     ibView.Format = DXGI_FORMAT_R16_UINT;
     ibView.SizeInBytes = sizeof(indices);
