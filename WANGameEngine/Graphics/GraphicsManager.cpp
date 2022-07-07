@@ -33,6 +33,8 @@ bool GraphicsManager::initializeGraphicsManager()
     Result &= initializeHeap();
     Result &= initializeBuffer();
     Result &= initializeFance();
+    Result &= initializeResource();
+    Result &= initializeView();
 
     return Result;
 }
@@ -250,14 +252,47 @@ bool GraphicsManager::initializeResource()
         nullptr,
         IID_PPV_ARGS(&vertBuff));
 
+    
+
+    return true;
+}
+
+bool GraphicsManager::initializeView()
+{
     DirectX::XMFLOAT3* vertMap = nullptr;
     vertBuff->Map(0, nullptr, (void**)&vertMap);
     std::copy(std::begin(vertices), std::end(vertices), vertMap);
     vertBuff->Unmap(0, nullptr);
-    D3D12_VERTEX_BUFFER_VIEW vbView = {};
+
     vbView.BufferLocation = vertBuff->GetGPUVirtualAddress();
     vbView.SizeInBytes = sizeof(vertices);
     vbView.StrideInBytes = sizeof(vertices[0]);
 
-    return false;
+
+    unsigned short indices[] = { 0,1,2, 2,1,3 };
+
+    ID3D12Resource* idxBuff = nullptr;
+
+    resdesc.Width = sizeof(indices);
+    device->CreateCommittedResource(
+        &heapprop,
+        D3D12_HEAP_FLAG_NONE,
+        &resdesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&idxBuff)
+    );
+
+    unsigned short* mappedIdx = nullptr;
+    idxBuff->Map(0, nullptr, (void**)&mappedIdx);
+    std::copy(std::begin(indices), std::end(indices), mappedIdx);
+    idxBuff->Unmap(0, nullptr);
+    
+    //インデックスバッファビューを作成
+    D3D12_INDEX_BUFFER_VIEW ibView = {};
+    ibView.BufferLocation = idxBuff->GetGPUVirtualAddress();
+    ibView.Format = DXGI_FORMAT_R16_UINT;
+    ibView.SizeInBytes = sizeof(indices);
+
+    return true;
 }
