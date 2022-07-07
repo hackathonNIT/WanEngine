@@ -49,6 +49,8 @@ private:
 	D3D12_VERTEX_BUFFER_VIEW vbView = {};
 	D3D12_INDEX_BUFFER_VIEW ibView = {};
 
+	ID3D12PipelineState* pipelinestate = nullptr;
+
 	bool initializeWindow();
 	bool initializeDevice();
 	bool initializeCommand();
@@ -58,6 +60,8 @@ private:
 	bool initializeFance();
 	bool initializeResource();
 	bool initializeView();
+	bool initializeShader();
+
 public:
 	
 

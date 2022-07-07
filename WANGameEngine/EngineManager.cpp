@@ -32,7 +32,7 @@ bool EngineManager::initializeManager()
 {
     bool Result = false;
     Result = initializeGraphicsManager();
-    Result &= initializeShaderManager();
+    //Result &= initializeShaderManager();
     return Result;
 }
 
