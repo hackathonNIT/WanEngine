@@ -37,11 +37,7 @@ private:
 	ID3D12DescriptorHeap* rtvHeaps = nullptr;
 
 	
-	std::vector<ID3D12Resource*> backBuffers;
-
-	//フェンス
-	ID3D12Fence* fence = nullptr;
-	UINT64 fenceVal = 0;
+	
 
 	//リソース
 	ResourceManager* resourceManager = nullptr;
