@@ -31,10 +31,7 @@ EngineManager::~EngineManager()
 bool EngineManager::initializeManager()
 {
     bool Result = false;
-    //Result = initializeWindowManager();
-    //Result &= initializeDeviceManager();
     Result = initializeGraphicsManager();
-    //Result &= initializeResourceManager();
     Result &= initializeShaderManager();
     return Result;
 }
@@ -71,23 +68,7 @@ bool EngineManager::MainLoopProcess()
 /**************************initialize**************************/
 
 
-bool EngineManager::initializeWindowManager()
-{
-    windowMamager = new WindowManager(window_width, window_height);
-    if (windowMamager->hwnd == 0)return false;
-#ifdef _DEBUG
-    //デバッグレイヤーをオンに
-    EnableDebugLayer();
-#endif
-    return true;
-}
 
-bool EngineManager::initializeDeviceManager()
-{
-    deviceManager = new DeviceManager();
-
-    return true;
-}
 
 bool EngineManager::initializeGraphicsManager()
 {
@@ -103,13 +84,7 @@ bool EngineManager::initializeGraphicsManager()
     return Result;
 }
 
-bool EngineManager::initializeResourceManager()
-{
-    
-    
 
-    return true;
-}
 
 bool EngineManager::initializeShaderManager()
 {
