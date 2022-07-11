@@ -36,17 +36,16 @@ private:
 	ID3D12Fence* fence = nullptr;
 	UINT64 fenceVal = 0;
 
-	DirectX::XMFLOAT3 vertices[3] = {
-		{-0.5f,-0.7f,0.0f} ,//ç∂â∫
-		{-0.0f,0.7f,0.0f} ,//ç∂è„
-		{0.5f,-0.7f,0.0f} //âEâ∫
-	};
+	
 	D3D12_HEAP_PROPERTIES heapprop = {};
 	D3D12_RESOURCE_DESC resdesc = {};
 	ID3D12Resource* vertBuff = nullptr;
 
 	D3D12_VERTEX_BUFFER_VIEW vbView = {};
 	D3D12_INDEX_BUFFER_VIEW ibView = {};
+
+	D3D12_VERTEX_BUFFER_VIEW vbView2 = {};
+	D3D12_INDEX_BUFFER_VIEW ibView2 = {};
 
 	ID3D12PipelineState* pipelinestate = nullptr;
 
