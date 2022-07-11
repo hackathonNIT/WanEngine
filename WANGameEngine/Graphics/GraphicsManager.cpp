@@ -21,8 +21,8 @@ GraphicsManager::GraphicsManager(const unsigned int window_width, const unsigned
     this->window_height = window_height;
     this->window_width = window_width;
 
-    viewport.Width = window_width;//出力先の幅(ピクセル数)
-    viewport.Height = window_height;//出力先の高さ(ピクセル数)
+    viewport.Width = window_width/2;//出力先の幅(ピクセル数)
+    viewport.Height = window_height/2;//出力先の高さ(ピクセル数)
     viewport.TopLeftX = 0;//出力先の左上座標X
     viewport.TopLeftY = 0;//出力先の左上座標Y
     viewport.MaxDepth = 1.0f;//深度最大値
@@ -33,6 +33,8 @@ GraphicsManager::GraphicsManager(const unsigned int window_width, const unsigned
     scissorrect.left = 0;//切り抜き左座標
     scissorrect.right = scissorrect.left + window_width;//切り抜き右座標
     scissorrect.bottom = scissorrect.top + window_height;//切り抜き下座標
+
+    
 }
 
 GraphicsManager::~GraphicsManager()
@@ -49,10 +51,16 @@ bool GraphicsManager::initializeGraphicsManager()
     Result &= initializeHeap();
     Result &= initializeBuffer();
     Result &= initializeFance();
+    
+    ShowWindow(hwnd, SW_SHOW);
+
+    //ここから下変える
+
     Result &= initializeResource();
     Result &= initializeView();
     Result &= initializeShader();
 
+    blocklist = new BlockList(window_width / 2, window_height, device);
     return Result;
 }
 
@@ -63,7 +71,13 @@ void GraphicsManager::draw()
     //directxの処理
     auto bbIdx = swapchain->GetCurrentBackBufferIndex();
 
-
+    D3D12_VIEWPORT viewport2 = {};
+    viewport2.Width = window_width ;//出力先の幅(ピクセル数)
+    viewport2.Height = window_height ;//出力先の高さ(ピクセル数)
+    viewport2.TopLeftX = 0;;//出力先の左上座標X
+    viewport2.TopLeftY = 0;//出力先の左上座標Y
+    viewport2.MaxDepth = 1.0f;//深度最大値
+    viewport2.MinDepth = 0.0f;//深度最小値
     //TODO : GraphicsManager内で処理できるように変更する
 
     D3D12_RESOURCE_BARRIER BarrierDesc = {};
@@ -98,6 +112,21 @@ void GraphicsManager::draw()
     //_cmdList->DrawInstanced(4, 1, 0, 0);
     cmdList->DrawIndexedInstanced(6, 1, 0, 0, 0);
 
+    cmdList->RSSetViewports(1, &viewport2);
+    cmdList->RSSetScissorRects(1, &scissorrect);
+    cmdList->SetGraphicsRootSignature(rootsignature);
+
+    cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    cmdList->IASetVertexBuffers(0, 1, &vbView2);
+    cmdList->IASetIndexBuffer(&ibView2);
+
+    
+
+    //_cmdList->DrawInstanced(4, 1, 0, 0);
+    cmdList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+    
+    blocklist->process();
+    blocklist->draw(cmdList);
 
     BarrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
     BarrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
@@ -252,6 +281,9 @@ bool GraphicsManager::initializeBuffer()
     return true;
 }
 
+
+
+
 bool GraphicsManager::initializeFance()
 {
     device->CreateFence(fenceVal, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
@@ -260,10 +292,12 @@ bool GraphicsManager::initializeFance()
 
 bool GraphicsManager::initializeResource()
 {
-    ShowWindow(hwnd, SW_SHOW);//
-
-
-    
+    //
+    DirectX::XMFLOAT3 vertices[] = {
+        {-0.5f,-0.7f,0.0f} ,//左下
+        {-0.0f,0.7f,0.0f} ,//左上
+        {0.5f,-0.7f,0.0f}, //右下
+    };
 
     heapprop.Type = D3D12_HEAP_TYPE_UPLOAD;
     heapprop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -287,6 +321,44 @@ bool GraphicsManager::initializeResource()
         nullptr,
         IID_PPV_ARGS(&vertBuff));
 
+    DirectX::XMFLOAT3* vertMap = nullptr;
+    vertBuff->Map(0, nullptr, (void**)&vertMap);
+    std::copy(std::begin(vertices), std::end(vertices), vertMap);
+    vertBuff->Unmap(0, nullptr);
+
+    vbView2.BufferLocation = vertBuff->GetGPUVirtualAddress();
+    vbView2.SizeInBytes = sizeof(vertices);
+    vbView2.StrideInBytes = sizeof(vertices[0]);
+
+
+    unsigned short indices[] = { 0,1,2, 2,1,3 };
+
+    ID3D12Resource* idxBuff = nullptr;
+
+    resdesc.Width = sizeof(indices);
+    device->CreateCommittedResource(
+        &heapprop,
+        D3D12_HEAP_FLAG_NONE,
+        &resdesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&idxBuff)
+    );
+
+    unsigned short* mappedIdx = nullptr;
+    idxBuff->Map(0, nullptr, (void**)&mappedIdx);
+    std::copy(std::begin(indices), std::end(indices), mappedIdx);
+    idxBuff->Unmap(0, nullptr);
+
+    //インデックスバッファビューを作成
+    ibView2.BufferLocation = idxBuff->GetGPUVirtualAddress();
+    ibView2.Format = DXGI_FORMAT_R16_UINT;
+    ibView2.SizeInBytes = sizeof(indices);
+
+    
+
+    
+
     
 
     return true;
@@ -294,6 +366,35 @@ bool GraphicsManager::initializeResource()
 
 bool GraphicsManager::initializeView()
 {
+    DirectX::XMFLOAT3 vertices[] = {
+        {-0.5f,-0.7f,0.0f} ,//左下
+        {-0.0f,0.7f,0.0f} ,//左上
+        {0.5f,-0.7f,0.0f}, //右下
+        {0.5f,0.0f,0.0f} //右下
+    };
+
+    heapprop.Type = D3D12_HEAP_TYPE_UPLOAD;
+    heapprop.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    heapprop.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+
+    resdesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    resdesc.Width = sizeof(vertices);
+    resdesc.Height = 1;
+    resdesc.DepthOrArraySize = 1;
+    resdesc.MipLevels = 1;
+    resdesc.Format = DXGI_FORMAT_UNKNOWN;
+    resdesc.SampleDesc.Count = 1;
+    resdesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+    resdesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+    device->CreateCommittedResource(
+        &heapprop,
+        D3D12_HEAP_FLAG_NONE,
+        &resdesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&vertBuff));
+    
     DirectX::XMFLOAT3* vertMap = nullptr;
     vertBuff->Map(0, nullptr, (void**)&vertMap);
     std::copy(std::begin(vertices), std::end(vertices), vertMap);

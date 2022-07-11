@@ -149,17 +149,21 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Block\BlockList.cpp" />
     <ClCompile Include="EngineManager.cpp" />
     <ClCompile Include="Graphics\GraphicsManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Shader\ShaderManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Block\BlockList.h" />
     <ClInclude Include="EngineManager.h" />
     <ClInclude Include="Graphics\GraphicsManager.h" />
+    <ClInclude Include="Graphics\Vertex.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Shader\ShaderManager.h" />
     <ClInclude Include="Singleton.h" />
+    <ClInclude Include="WindowBase.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="WANGameEngine.rc" />
