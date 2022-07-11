@@ -6,6 +6,8 @@
 #include<DirectXMath.h>
 #include<vector>
 
+#include "../Block/BlockList.h"
+
 class GraphicsManager {
 private:
 
@@ -20,6 +22,7 @@ private:
 	unsigned int window_width;
 	unsigned int window_height;
 
+	BlockList* blocklist;
 	//ƒRƒ}ƒ“ƒh
 	ID3D12CommandAllocator* cmdAllocator = nullptr;
 	ID3D12GraphicsCommandList* cmdList = nullptr;

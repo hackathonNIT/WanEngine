@@ -33,6 +33,8 @@ GraphicsManager::GraphicsManager(const unsigned int window_width, const unsigned
     scissorrect.left = 0;//切り抜き左座標
     scissorrect.right = scissorrect.left + window_width;//切り抜き右座標
     scissorrect.bottom = scissorrect.top + window_height;//切り抜き下座標
+
+    
 }
 
 GraphicsManager::~GraphicsManager()
@@ -58,6 +60,7 @@ bool GraphicsManager::initializeGraphicsManager()
     Result &= initializeView();
     Result &= initializeShader();
 
+    blocklist = new BlockList(window_width / 2, window_height, device);
     return Result;
 }
 
@@ -117,10 +120,13 @@ void GraphicsManager::draw()
     cmdList->IASetVertexBuffers(0, 1, &vbView2);
     cmdList->IASetIndexBuffer(&ibView2);
 
+    
 
     //_cmdList->DrawInstanced(4, 1, 0, 0);
     cmdList->DrawIndexedInstanced(6, 1, 0, 0, 0);
-
+    
+    blocklist->process();
+    blocklist->draw(cmdList);
 
     BarrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
     BarrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
